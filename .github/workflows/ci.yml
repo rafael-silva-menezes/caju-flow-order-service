@@ -1,0 +1,177 @@
+name: Go CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: ['1.22.6']
+
+    steps:
+      # Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necessário para melhor análise pelo SonarCloud
+
+      # Configurar Go
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true  # Ativa o cache das dependências usando go.sum
+
+      # Cache para golangci-lint
+      - name: Cache golangci-lint
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/golangci-lint
+          key: ${{ runner.os }}-golangci-lint-${{ hashFiles('**/go.sum') }}
+
+      # Instalar dependências
+      - name: Install dependencies
+        run: go mod tidy
+
+      # Build do projeto
+      - name: Build
+        run: go build -v ./...
+
+      # Rodar testes com cobertura
+      - name: Run Tests with Coverage
+        run: go test -coverprofile=coverage.out -json ./... > TestResults-${{ matrix.go-version }}.json
+
+      # Lint com golangci-lint
+      - name: Run Linter
+        run: golangci-lint run ./...
+
+      # Upload de resultados dos testes como artefatos
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults-${{ matrix.go-version }}
+          path: TestResults-${{ matrix.go-version }}.json
+
+      # Upload de cobertura de código como artefato
+      - name: Upload Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Coverage-${{ matrix.go-version }}
+          path: coverage.out
+
+      # Gerar e fazer upload do relatório HTML de cobertura
+      - name: Generate and Upload Coverage Report HTML
+        run: go tool cover -html=coverage.out -o coverage.html
+      - name: Upload Coverage Report HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: Coverage Report
+          path: coverage.html
+
+      # Verificar dependências
+      - name: Verify Dependencies
+        run: go mod verify
+
+      # Formatar o código
+      - name: Format Code
+        run: gofmt -s -w .
+
+      # Integração com Codecov
+      - name: Upload Coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.out
+          flags: ${{ matrix.go-version }}
+          name: Code Coverage
+
+      # Integração com SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # Rodar Benchmarks
+      - name: Run Benchmarks
+        run: go test -bench=. -benchmem ./... > Benchmarks-${{ matrix.go-version }}.txt
+
+      # Upload dos Benchmarks
+      - name: Upload Benchmarks
+        uses: actions/upload-artifact@v4
+        with:
+          name: Benchmarks-${{ matrix.go-version }}
+          path: Benchmarks-${{ matrix.go-version }}.txt
+
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Análise de Segurança com Snyk
+      - name: Install Snyk
+        run: npm install -g snyk
+
+      - name: Run Snyk Security Scan
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-projects
+        
+  notify:
+      needs: [build-and-test, analyze]  # Add dependencies to ensure notification runs after main jobs
+      runs-on: ubuntu-latest
+      if: always()  # Run even if previous jobs fail
+
+      steps:
+        - name: Notify Slack
+          uses: 8398a7/action-slack@v3
+          with:
+            status: ${{ job.status }}
+            fields: repo,message,commit,author,action,eventName,ref
+            custom_payload: |
+              {
+                "attachments": [{
+                  "color": "${{ job.status == 'success' && 'good' || job.status == 'failure' && 'danger' || 'warning' }}",
+                  "text": "${{ job.status == 'success' && ':white_check_mark: Workflow Success' || job.status == 'failure' && ':x: Workflow Failed' || ':warning: Workflow Status' }}",
+                  "fields": [{
+                    "title": "Repository",
+                    "value": "${{ github.repository }}",
+                    "short": true
+                  }, {
+                    "title": "Branch",
+                    "value": "${{ github.ref_name }}",
+                    "short": true
+                  }, {
+                    "title": "Event",
+                    "value": "${{ github.event_name }}",
+                    "short": true
+                  }, {
+                    "title": "Workflow URL",
+                    "value": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                    "short": false
+                  }]
+                }]
+              }
+          env:
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+  cleanup:
+      needs: [build-and-test, analyze, notify]
+      runs-on: ubuntu-latest
+      if: always()
+
+      steps:
+        - name: Cleanup
+          run: rm -rf coverage.out TestResults-*.json
