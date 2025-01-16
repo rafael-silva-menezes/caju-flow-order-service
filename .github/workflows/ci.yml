@@ -16,54 +16,46 @@ jobs:
         go-version: ['1.22.6']
 
     steps:
-      # Checkout do código
+      
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Necessário para melhor análise pelo SonarCloud
+          fetch-depth: 0  
 
-      # Configurar Go
+      
       - name: Setup Go ${{ matrix.go-version }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
-          cache: true  # Ativa o cache das dependências usando go.sum
+          cache: true  
 
-      # Cache para golangci-lint
       - name: Cache golangci-lint
         uses: actions/cache@v3
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-golangci-lint-${{ hashFiles('**/go.sum') }}
 
-      # Instalar dependências
       - name: Install dependencies
         run: go mod tidy
 
-      # Build do projeto
       - name: Build
         run: go build -v ./...
 
-      # Listar arquivos no diretório
       - name: List files in the directory
         run: ls -la
 
-      # Rodar testes com cobertura
       - name: Run Tests with Coverage
         run: go test . -coverprofile=coverage.out -json > TestResults-${{ matrix.go-version }}.json
 
-      # Lint com golangci-lint
       - name: Run Linter
         run: golangci-lint run ./...
 
-      # Upload de resultados dos testes como artefatos
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         with:
           name: TestResults-${{ matrix.go-version }}
           path: TestResults-${{ matrix.go-version }}.json
 
-      # Upload de cobertura de código como artefato
       - name: Upload Coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,7 +63,6 @@ jobs:
           name: Coverage-${{ matrix.go-version }}
           path: coverage.out
 
-      # Gerar e fazer upload do relatório HTML de cobertura
       - name: Generate and Upload Coverage Report HTML
         run: go tool cover -html=coverage.out -o coverage.html
       - name: Upload Coverage Report HTML
@@ -80,15 +71,12 @@ jobs:
           name: Coverage Report
           path: coverage.html
 
-      # Verificar dependências
       - name: Verify Dependencies
         run: go mod verify
 
-      # Formatar o código
       - name: Format Code
         run: gofmt -s -w .
 
-      # Integração com Codecov
       - name: Upload Coverage to Codecov
         if: success()
         uses: codecov/codecov-action@v3
@@ -98,17 +86,14 @@ jobs:
           flags: ${{ matrix.go-version }}
           name: Code Coverage
 
-      # Integração com SonarCloud
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      # Rodar Benchmarks
       - name: Run Benchmarks
         run: go test -bench=. -benchmem ./... > Benchmarks-${{ matrix.go-version }}.txt
 
-      # Upload dos Benchmarks
       - name: Upload Benchmarks
         uses: actions/upload-artifact@v4
         with:
@@ -119,13 +104,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout do código
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Análise de Segurança com Snyk
       - name: Install Snyk
         run: npm install -g snyk
 
