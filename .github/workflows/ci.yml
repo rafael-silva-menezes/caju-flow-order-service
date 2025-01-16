@@ -22,7 +22,6 @@ jobs:
         with:
           fetch-depth: 0  
 
-      
       - name: Setup Go ${{ matrix.go-version }}
         uses: actions/setup-go@v5
         with:
@@ -48,7 +47,9 @@ jobs:
         run: go test ./... -coverprofile=coverage.out -json > TestResults-${{ matrix.go-version }}.json
 
       - name: Run Linter
-        run: golangci-lint run ./...
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.60
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
