@@ -16,7 +16,6 @@ jobs:
         go-version: ['1.22.6']
 
     steps:
-      
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -40,37 +39,19 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-      - name: List files in the directory
-        run: ls -la
-
-      - name: Run Tests with Coverage
-        run: go test ./... -coverprofile=coverage.out -json > TestResults-${{ matrix.go-version }}.json
-
       - name: Run Linter
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.60
+
+      - name: Run Tests with Coverage
+        run: go test ./... -coverprofile=coverage.out -json > TestResults-${{ matrix.go-version }}.json
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         with:
           name: TestResults-${{ matrix.go-version }}
           path: TestResults-${{ matrix.go-version }}.json
-
-      - name: Upload Coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Coverage-${{ matrix.go-version }}
-          path: coverage.out
-
-      - name: Generate and Upload Coverage Report HTML
-        run: go tool cover -html=coverage.out -o coverage.html
-      - name: Upload Coverage Report HTML
-        uses: actions/upload-artifact@v4
-        with:
-          name: Coverage Report
-          path: coverage.html
 
       - name: Verify Dependencies
         run: go mod verify
@@ -91,15 +72,6 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      - name: Run Benchmarks
-        run: go test ./... -bench=. -benchmem ./... > Benchmarks-${{ matrix.go-version }}.txt
-
-      - name: Upload Benchmarks
-        uses: actions/upload-artifact@v4
-        with:
-          name: Benchmarks-${{ matrix.go-version }}
-          path: Benchmarks-${{ matrix.go-version }}.txt
 
   analyze:
     runs-on: ubuntu-latest
