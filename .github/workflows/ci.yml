@@ -45,7 +45,7 @@ jobs:
         run: ls -la
 
       - name: Run Tests with Coverage
-        run: go test . -coverprofile=coverage.out -json > TestResults-${{ matrix.go-version }}.json
+        run: go test  -coverprofile=coverage.out -json > TestResults-${{ matrix.go-version }}.json
 
       - name: Run Linter
         run: golangci-lint run ./...
