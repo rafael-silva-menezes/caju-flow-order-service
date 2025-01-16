@@ -46,7 +46,7 @@ jobs:
 
       # Rodar testes com cobertura
       - name: Run Tests with Coverage
-        run: go test -coverprofile=coverage.out -json ./... > TestResults-${{ matrix.go-version }}.json
+        run: go test . -coverprofile=coverage.out -json > TestResults-${{ matrix.go-version }}.json
 
       # Lint com golangci-lint
       - name: Run Linter
@@ -131,42 +131,46 @@ jobs:
         run: snyk test --all-projects
         
   notify:
-      needs: [build-and-test, analyze]  # Add dependencies to ensure notification runs after main jobs
-      runs-on: ubuntu-latest
-      if: always()  # Run even if previous jobs fail
-
-      steps:
-        - name: Notify Slack
-          uses: 8398a7/action-slack@v3
-          with:
-            status: ${{ job.status }}
-            fields: repo,message,commit,author,action,eventName,ref
-            custom_payload: |
-              {
-                "attachments": [{
-                  "color": "${{ job.status == 'success' && 'good' || job.status == 'failure' && 'danger' || 'warning' }}",
-                  "text": "${{ job.status == 'success' && ':white_check_mark: Workflow Success' || job.status == 'failure' && ':x: Workflow Failed' || ':warning: Workflow Status' }}",
-                  "fields": [{
-                    "title": "Repository",
-                    "value": "${{ github.repository }}",
-                    "short": true
-                  }, {
-                    "title": "Branch",
-                    "value": "${{ github.ref_name }}",
-                    "short": true
-                  }, {
-                    "title": "Event",
-                    "value": "${{ github.event_name }}",
-                    "short": true
-                  }, {
-                    "title": "Workflow URL",
-                    "value": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                    "short": false
-                  }]
+    needs: [build-and-test, analyze]  # Garante que o job só será executado depois de `build-and-test` e `analyze`
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "${{ job.status == 'success' && 'good' || job.status == 'failure' && 'danger' || 'warning' }}",
+                "text": "${{ job.status == 'success' && ':white_check_mark: Workflow Success' || job.status == 'failure' && ':x: Workflow Failed' || ':warning: Workflow Status' }}",
+                "fields": [{
+                  "title": "Repository",
+                  "value": "${{ github.repository }}",
+                  "short": true
+                }, {
+                  "title": "Branch",
+                  "value": "${{ github.ref_name }}",
+                  "short": true
+                }, {
+                  "title": "Event",
+                  "value": "${{ github.event_name }}",
+                  "short": true
+                }, {
+                  "Workflow URL": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                  "short": false
+                }, {
+                  "title": "Build Status",
+                  "value": "${{ job.status }}",
+                  "short": false
                 }]
-              }
-          env:
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
   cleanup:
       needs: [build-and-test, analyze, notify]
       runs-on: ubuntu-latest
