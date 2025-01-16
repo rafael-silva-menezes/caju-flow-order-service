@@ -52,10 +52,14 @@ jobs:
       - name: Run Tests with Coverage
         run: go test ./... -coverprofile=coverage.out -json
 
+      - name: Filter coverage files to exclude test files
+        run: |
+          grep -v '_test.go' coverage.out > filtered-coverage.out
+
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: coverage.out
+          files: filtered-coverage.out
           flags: ${{ matrix.go-version }}
           name: Code Coverage
           slug: rafael-silva-menezes/caju-flow-order-service
