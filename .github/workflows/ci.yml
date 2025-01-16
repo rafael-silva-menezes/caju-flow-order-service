@@ -67,6 +67,7 @@ jobs:
           files: coverage.out
           flags: ${{ matrix.go-version }}
           name: Code Coverage
+          slug: rafael-silva-menezes/caju-flow-order-service
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v4
