@@ -1,8 +1,11 @@
-module github.com/rafael-silva-menezes/caju-flow-microservices/order-service
+module github.com/rafael-silva-menezes/caju-flow-order-service
 
 go 1.22.6
 
-require github.com/stretchr/testify v1.10.0
+require (
+	github.com/google/uuid v1.6.0
+	github.com/stretchr/testify v1.10.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
