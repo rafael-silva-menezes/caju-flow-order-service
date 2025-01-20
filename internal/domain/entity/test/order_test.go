@@ -19,7 +19,7 @@ func TestNewOrder_ValidOrder(t *testing.T) {
 
 	require.NoError(t, err)
 
-	assert.Equal(t, "12345", order.OrderID)
+	assert.Equal(t, "12345", order.ID)
 	assert.Equal(t, "João Silva", order.CustomerName)
 	assert.Equal(t, entity.Pending, order.Status)
 	assert.Len(t, order.Items, 2)
@@ -54,7 +54,7 @@ func TestOrder_IsValid(t *testing.T) {
 	err = order.IsValid()
 	assert.NoError(t, err)
 
-	order.OrderID = ""
+	order.ID = ""
 	err = order.IsValid()
 	assert.Error(t, err)
 }
