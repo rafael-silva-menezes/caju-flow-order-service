@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:15
+    container_name: order-service-db
+    env_file:
+      - .env
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  broker:
+    image: rabbitmq:3-management
+    container_name: eshop_rabbitmq
+    env_file:
+      - .env
+    ports:
+      - "${BROKER_PORT}:5672"
+      - "${BROKER_MANAGEMENT_PORT}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${BROKER_USER}
+      RABBITMQ_DEFAULT_PASS: ${BROKER_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
