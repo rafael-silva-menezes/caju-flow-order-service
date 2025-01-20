@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"order-service/internal/domain/entity"
 )
+
+var ErrNotFound = errors.New("order not found")
 
 type OrderRepository interface {
 	Save(ctx context.Context, order *entity.Order) error
