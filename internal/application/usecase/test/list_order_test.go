@@ -37,8 +37,8 @@ func TestListOrderUseCase(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Len(t, output.Orders, 2)
-		assert.Equal(t, order1.OrderID, output.Orders[0].OrderID)
-		assert.Equal(t, order2.OrderID, output.Orders[1].OrderID)
+		assert.Equal(t, order1.ID, output.Orders[0].ID)
+		assert.Equal(t, order2.ID, output.Orders[1].ID)
 	})
 
 	t.Run("empty list", func(t *testing.T) {

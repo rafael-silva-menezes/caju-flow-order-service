@@ -37,7 +37,7 @@ func TestCreateOrderUseCase(t *testing.T) {
 		mockPub.On("PublishCreatedOrder", mock.Anything, mock.AnythingOfType("*entity.Order")).Return(nil)
 
 		mockOrder := &entity.Order{
-			OrderID:      uuid.New().String(),
+			ID:           uuid.New().String(),
 			CustomerName: "John Doe",
 			Status:       entity.Pending,
 			Items:        []entity.Item{{ID: "1", Name: "Item 1", Quantity: 2, Price: 10.0}},
@@ -48,7 +48,7 @@ func TestCreateOrderUseCase(t *testing.T) {
 		output, err := useCase.Execute(context.Background(), input)
 
 		assert.NoError(t, err)
-		_, err = uuid.Parse(output.OrderID)
+		_, err = uuid.Parse(output.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedOutput.CustomerName, output.CustomerName)
 		assert.Equal(t, expectedOutput.Status, output.Status)

@@ -36,7 +36,7 @@ func TestGetOrderUseCase(t *testing.T) {
 		output, err := useCase.Execute(context.Background(), "order123")
 
 		assert.NoError(t, err)
-		assert.Equal(t, expectedOutput.OrderID, output.OrderID)
+		assert.Equal(t, expectedOutput.ID, output.ID)
 		assert.Equal(t, expectedOutput.CustomerName, output.CustomerName)
 		assert.Equal(t, expectedOutput.Total, output.Total)
 		assert.Equal(t, expectedOutput.Status, output.Status)

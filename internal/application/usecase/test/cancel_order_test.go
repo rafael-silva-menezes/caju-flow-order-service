@@ -18,17 +18,17 @@ import (
 func TestCancelOrderUseCase_Execute(t *testing.T) {
 	tests := []struct {
 		name        string
-		orderID     string
+		id          string
 		setupMocks  func(mockRepo *usecasemock.MockOrderRepository)
 		expected    dtos.OrderOutput
 		expectedErr error
 	}{
 		{
-			name:    "should cancel pending order",
-			orderID: "123",
+			name: "should cancel pending order",
+			id:   "123",
 			setupMocks: func(mockRepo *usecasemock.MockOrderRepository) {
 				order := &entity.Order{
-					OrderID:      "123",
+					ID:           "123",
 					CustomerName: "John",
 					Status:       entity.Pending,
 				}
@@ -36,7 +36,7 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 				mockRepo.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			expected: dtos.OrderOutput{
-				OrderID:      "123",
+				ID:           "123",
 				CustomerName: "John",
 				Total:        0,
 				Status:       "canceled",
@@ -44,8 +44,8 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:    "should return error if order not found",
-			orderID: "999",
+			name: "should return error if order not found",
+			id:   "999",
 			setupMocks: func(mockRepo *usecasemock.MockOrderRepository) {
 				mockRepo.On("FindByID", mock.Anything, "999").Return(nil, repository.ErrNotFound)
 			},
@@ -53,11 +53,11 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 			expectedErr: errors.New("order not found"),
 		},
 		{
-			name:    "should return error if order is not pending",
-			orderID: "123",
+			name: "should return error if order is not pending",
+			id:   "123",
 			setupMocks: func(mockRepo *usecasemock.MockOrderRepository) {
 				order := &entity.Order{
-					OrderID:      "123",
+					ID:           "123",
 					CustomerName: "John",
 					Status:       entity.Completed,
 				}
@@ -74,7 +74,7 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 			tt.setupMocks(mockRepo)
 			cancelOrderUseCase := usecase.NewCancelOrderUseCase(mockRepo)
 
-			result, err := cancelOrderUseCase.Execute(context.Background(), tt.orderID)
+			result, err := cancelOrderUseCase.Execute(context.Background(), tt.id)
 
 			if tt.expectedErr != nil {
 				assert.EqualError(t, err, tt.expectedErr.Error())

@@ -35,7 +35,7 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 			},
 			setupMocks: func(mockRepo *usecasemock.MockOrderRepository) {
 				order := &entity.Order{
-					OrderID:      "123",
+					ID:           "123",
 					CustomerName: "John",
 					Status:       entity.Pending,
 					Items:        []entity.Item{{ID: "item1", Name: "Item 1", Quantity: 1, Price: 10}},
@@ -44,7 +44,7 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 				mockRepo.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			expected: dtos.OrderOutput{
-				OrderID:      "123",
+				ID:           "123",
 				CustomerName: "Jane",
 				Total:        20,
 				Status:       "pending",
@@ -80,7 +80,7 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 			},
 			setupMocks: func(mockRepo *usecasemock.MockOrderRepository) {
 				order := &entity.Order{
-					OrderID:      "123",
+					ID:           "123",
 					CustomerName: "John",
 					Status:       entity.Completed,
 					Items:        []entity.Item{{ID: "item1", Name: "Item 1", Quantity: 1, Price: 10}},
