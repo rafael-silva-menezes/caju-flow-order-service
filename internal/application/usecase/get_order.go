@@ -31,10 +31,5 @@ func (u *getOrderUseCase) Execute(ctx context.Context, orderID string) (dtos.Get
 		return dtos.GetOrderOutput{}, err
 	}
 
-	return dtos.GetOrderOutput{
-		OrderID:      order.OrderID,
-		CustomerName: order.CustomerName,
-		Total:        order.Total(),
-		Status:       order.Status.String(),
-	}, nil
+	return dtos.FromEntityToGetOrderOutput(order), nil
 }

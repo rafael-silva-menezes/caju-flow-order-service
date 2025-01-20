@@ -29,12 +29,7 @@ func (u *listOrderUseCase) Execute(ctx context.Context) (dtos.ListOrderOutput, e
 
 	var output dtos.ListOrderOutput
 	for _, order := range orders {
-		output.Orders = append(output.Orders, dtos.OrderOutput{
-			OrderID:      order.OrderID,
-			CustomerName: order.CustomerName,
-			Total:        order.Total(),
-			Status:       order.Status.String(),
-		})
+		output.Orders = append(output.Orders, dtos.FromEntityToOrderOutput(&order))
 	}
 
 	return output, nil

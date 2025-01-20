@@ -57,23 +57,7 @@ func (u *createOrderUseCase) Execute(ctx context.Context, input dtos.CreateOrder
 		return dtos.CreateOrderOutput{}, err
 	}
 
-	output := dtos.CreateOrderOutput{
-		OrderID:      newOrder.OrderID,
-		CustomerName: newOrder.CustomerName,
-		Total:        newOrder.Total(),
-		Status:       newOrder.Status.String(),
-	}
-	for _, item := range newOrder.Items {
-		output.Items = append(output.Items, dtos.ItemOutput{
-			ID:       item.ID,
-			Name:     item.Name,
-			Quantity: item.Quantity,
-			Price:    item.Price,
-			Total:    item.Total(),
-		})
-	}
-
-	return output, nil
+	return dtos.FromEntityToCreateOrderOutput(newOrder), nil
 }
 
 func generateOrderID() string {
