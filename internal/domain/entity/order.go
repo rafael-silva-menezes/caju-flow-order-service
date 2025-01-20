@@ -19,7 +19,7 @@ func (s OrderStatus) String() string {
 }
 
 type Order struct {
-	OrderID      string      `json:"order_id"`
+	ID           string      `json:"id"`
 	CustomerName string      `json:"customer_name"`
 	Items        []Item      `json:"items"`
 	Status       OrderStatus `json:"status"`
@@ -27,7 +27,7 @@ type Order struct {
 	UpdatedAt    time.Time   `json:"updated_at"`
 }
 
-func NewOrder(orderID, customerName string, items []Item) (*Order, error) {
+func NewOrder(ID, customerName string, items []Item) (*Order, error) {
 	if len(items) == 0 {
 		return nil, errors.New("order must contain at least one item")
 	}
@@ -39,7 +39,7 @@ func NewOrder(orderID, customerName string, items []Item) (*Order, error) {
 	}
 
 	return &Order{
-		OrderID:      orderID,
+		ID:           ID,
 		CustomerName: customerName,
 		Items:        items,
 		Status:       Pending,
@@ -49,7 +49,7 @@ func NewOrder(orderID, customerName string, items []Item) (*Order, error) {
 }
 
 func (o *Order) IsValid() error {
-	if o.OrderID == "" {
+	if o.ID == "" {
 		return errors.New("invalid order id")
 	}
 	return nil
@@ -88,14 +88,11 @@ func (o *Order) UpdateOrderDetails(newCustomerName string, newItems []Item) erro
 	return nil
 }
 
-// Método SetStatus para atualizar o status do pedido
 func (o *Order) SetStatus(status OrderStatus) error {
-	// Verifica se o status atual permite a alteração
 	if o.Status == status {
-		return nil // Caso o status seja o mesmo, não faz sentido alterá-lo
+		return nil
 	}
 
-	// Caso o pedido já tenha sido processado ou concluído, ele não pode ser alterado para outro status
 	if o.Status == Completed || o.Status == Canceled {
 		return errors.New("cannot change status of completed or canceled order")
 	}
