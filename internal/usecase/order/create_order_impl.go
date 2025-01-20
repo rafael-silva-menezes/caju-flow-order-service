@@ -3,7 +3,8 @@ package order
 import (
 	"context"
 	"errors"
-	"time"
+
+	"github.com/google/uuid"
 
 	"order-service/internal/domain/entity"
 	"order-service/internal/domain/publisher"
@@ -15,7 +16,6 @@ type createOrderUseCase struct {
 	orderPublisher  publisher.OrderPublisher
 }
 
-// NewCreateOrderUseCase creates a new instance of the CreateOrderUseCase.
 func NewCreateOrderUseCase(orderRepo repository.OrderRepository, orderPub publisher.OrderPublisher) CreateOrderUseCase {
 	return &createOrderUseCase{
 		orderRepository: orderRepo,
@@ -23,7 +23,6 @@ func NewCreateOrderUseCase(orderRepo repository.OrderRepository, orderPub publis
 	}
 }
 
-// Execute handles the logic for creating a new order.
 func (u *createOrderUseCase) Execute(ctx context.Context, input CreateOrderInput) (CreateOrderOutput, error) {
 	if len(input.Items) == 0 {
 		return CreateOrderOutput{}, errors.New("order must contain at least one item")
@@ -73,5 +72,5 @@ func (u *createOrderUseCase) Execute(ctx context.Context, input CreateOrderInput
 }
 
 func generateOrderID() string {
-	return time.Now().Format("20060102150405")
+	return uuid.New().String()
 }
