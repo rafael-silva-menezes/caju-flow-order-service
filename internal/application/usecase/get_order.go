@@ -9,7 +9,7 @@ import (
 )
 
 type GetOrderUseCase interface {
-	Execute(ctx context.Context, orderID string) (dtos.OrderOutput, error)
+	Execute(ctx context.Context, id string) (dtos.OrderOutput, error)
 }
 
 type getOrderUseCase struct {
@@ -22,8 +22,8 @@ func NewGetOrderUseCase(orderRepo repository.OrderRepository) GetOrderUseCase {
 	}
 }
 
-func (u *getOrderUseCase) Execute(ctx context.Context, orderID string) (dtos.OrderOutput, error) {
-	order, err := u.orderRepository.FindByID(ctx, orderID)
+func (u *getOrderUseCase) Execute(ctx context.Context, id string) (dtos.OrderOutput, error) {
+	order, err := u.orderRepository.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return dtos.OrderOutput{}, errors.New("order not found")

@@ -10,7 +10,7 @@ import (
 )
 
 type UpdateOrderUseCase interface {
-	Execute(ctx context.Context, orderID string, input dtos.OrderInput) (dtos.OrderOutput, error)
+	Execute(ctx context.Context, id string, input dtos.OrderInput) (dtos.OrderOutput, error)
 }
 
 type updateOrderUseCase struct {
@@ -23,7 +23,7 @@ func NewUpdateOrderUseCase(orderRepo repository.OrderRepository) UpdateOrderUseC
 	}
 }
 
-func (u *updateOrderUseCase) Execute(ctx context.Context, orderID string, input dtos.OrderInput) (dtos.OrderOutput, error) {
+func (u *updateOrderUseCase) Execute(ctx context.Context, id string, input dtos.OrderInput) (dtos.OrderOutput, error) {
 	if input.CustomerName == "" {
 		return dtos.OrderOutput{}, errors.New("customer name cannot be empty")
 	}
@@ -31,7 +31,7 @@ func (u *updateOrderUseCase) Execute(ctx context.Context, orderID string, input 
 		return dtos.OrderOutput{}, errors.New("order must contain at least one item")
 	}
 
-	order, err := u.orderRepository.FindByID(ctx, orderID)
+	order, err := u.orderRepository.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return dtos.OrderOutput{}, errors.New("order not found")

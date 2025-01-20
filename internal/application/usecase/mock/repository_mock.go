@@ -17,8 +17,8 @@ func (m *MockOrderRepository) Save(ctx context.Context, order *entity.Order) err
 	return args.Error(0)
 }
 
-func (m *MockOrderRepository) FindByID(ctx context.Context, orderID string) (*entity.Order, error) {
-	args := m.Called(ctx, orderID)
+func (m *MockOrderRepository) FindByID(ctx context.Context, id string) (*entity.Order, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

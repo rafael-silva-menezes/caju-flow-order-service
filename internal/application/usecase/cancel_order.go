@@ -10,7 +10,7 @@ import (
 )
 
 type CancelOrderUseCase interface {
-	Execute(ctx context.Context, orderID string) (dtos.OrderOutput, error)
+	Execute(ctx context.Context, id string) (dtos.OrderOutput, error)
 }
 
 type cancelOrderUseCase struct {
@@ -23,8 +23,8 @@ func NewCancelOrderUseCase(orderRepo repository.OrderRepository) CancelOrderUseC
 	}
 }
 
-func (u *cancelOrderUseCase) Execute(ctx context.Context, orderID string) (dtos.OrderOutput, error) {
-	order, err := u.orderRepository.FindByID(ctx, orderID)
+func (u *cancelOrderUseCase) Execute(ctx context.Context, id string) (dtos.OrderOutput, error) {
+	order, err := u.orderRepository.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return dtos.OrderOutput{}, errors.New("order not found")

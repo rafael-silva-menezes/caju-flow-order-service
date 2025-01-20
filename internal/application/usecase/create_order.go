@@ -42,7 +42,7 @@ func (u *createOrderUseCase) Execute(ctx context.Context, input dtos.OrderInput)
 		items = append(items, *item)
 	}
 
-	newOrder, err := entity.NewOrder(generateOrderID(), input.CustomerName, items)
+	newOrder, err := entity.NewOrder(generateID(), input.CustomerName, items)
 	if err != nil {
 		return dtos.OrderOutput{}, err
 	}
@@ -60,6 +60,6 @@ func (u *createOrderUseCase) Execute(ctx context.Context, input dtos.OrderInput)
 	return dtos.FromEntityToOrderOutput(newOrder), nil
 }
 
-func generateOrderID() string {
+func generateID() string {
 	return uuid.New().String()
 }

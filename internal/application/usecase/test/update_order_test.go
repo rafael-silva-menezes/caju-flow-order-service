@@ -18,15 +18,15 @@ import (
 func TestUpdateOrderUseCase_Execute(t *testing.T) {
 	tests := []struct {
 		name        string
-		orderID     string
+		id          string
 		input       dtos.OrderInput
 		setupMocks  func(mockRepo *usecasemock.MockOrderRepository)
 		expected    dtos.OrderOutput
 		expectedErr error
 	}{
 		{
-			name:    "should update pending order",
-			orderID: "123",
+			name: "should update pending order",
+			id:   "123",
 			input: dtos.OrderInput{
 				CustomerName: "Jane",
 				Items: []dtos.ItemInput{
@@ -55,8 +55,8 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:    "should return error if order not found",
-			orderID: "999",
+			name: "should return error if order not found",
+			id:   "999",
 			input: dtos.OrderInput{
 				CustomerName: "Jane",
 				Items: []dtos.ItemInput{
@@ -70,8 +70,8 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 			expectedErr: errors.New("order not found"),
 		},
 		{
-			name:    "should return error if order is not pending",
-			orderID: "123",
+			name: "should return error if order is not pending",
+			id:   "123",
 			input: dtos.OrderInput{
 				CustomerName: "Jane",
 				Items: []dtos.ItemInput{
@@ -98,7 +98,7 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 			tt.setupMocks(mockRepo)
 			updateOrderUseCase := usecase.NewUpdateOrderUseCase(mockRepo)
 
-			result, err := updateOrderUseCase.Execute(context.Background(), tt.orderID, tt.input)
+			result, err := updateOrderUseCase.Execute(context.Background(), tt.id, tt.input)
 
 			if tt.expectedErr != nil {
 				assert.EqualError(t, err, tt.expectedErr.Error())
