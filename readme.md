@@ -1,7 +1,3 @@
-Here's the updated documentation for your **Order Service**:
-
----
-
 # Order Service
 
 The **Order Service** is responsible for creating, querying, updating, and canceling orders, and sending them for processing. It exposes a REST API to interact with clients and publishes orders to a RabbitMQ queue to be processed by another service.
