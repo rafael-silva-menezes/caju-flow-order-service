@@ -10,7 +10,7 @@ import (
 )
 
 type CancelOrderUseCase interface {
-	Execute(ctx context.Context, orderID string) (dtos.GetOrderOutput, error)
+	Execute(ctx context.Context, orderID string) (dtos.OrderOutput, error)
 }
 
 type cancelOrderUseCase struct {
@@ -23,28 +23,28 @@ func NewCancelOrderUseCase(orderRepo repository.OrderRepository) CancelOrderUseC
 	}
 }
 
-func (u *cancelOrderUseCase) Execute(ctx context.Context, orderID string) (dtos.GetOrderOutput, error) {
+func (u *cancelOrderUseCase) Execute(ctx context.Context, orderID string) (dtos.OrderOutput, error) {
 	order, err := u.orderRepository.FindByID(ctx, orderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			return dtos.GetOrderOutput{}, errors.New("order not found")
+			return dtos.OrderOutput{}, errors.New("order not found")
 		}
-		return dtos.GetOrderOutput{}, err
+		return dtos.OrderOutput{}, err
 	}
 
 	if order.Status != entity.Pending {
-		return dtos.GetOrderOutput{}, errors.New("only pending orders can be canceled")
+		return dtos.OrderOutput{}, errors.New("only pending orders can be canceled")
 	}
 
 	err = order.SetStatus(entity.Canceled)
 	if err != nil {
-		return dtos.GetOrderOutput{}, err
+		return dtos.OrderOutput{}, err
 	}
 
 	err = u.orderRepository.Save(ctx, order)
 	if err != nil {
-		return dtos.GetOrderOutput{}, err
+		return dtos.OrderOutput{}, err
 	}
 
-	return dtos.FromEntityToGetOrderOutput(order), nil
+	return dtos.FromEntityToOrderOutput(order), nil
 }

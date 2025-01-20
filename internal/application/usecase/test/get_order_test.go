@@ -31,7 +31,7 @@ func TestGetOrderUseCase(t *testing.T) {
 		order, _ := entity.NewOrder("order123", "John Doe", items)
 		mockRepo.On("FindByID", mock.Anything, "order123").Return(order, nil)
 
-		expectedOutput := dtos.FromEntityToGetOrderOutput(order)
+		expectedOutput := dtos.FromEntityToOrderOutput(order)
 
 		output, err := useCase.Execute(context.Background(), "order123")
 

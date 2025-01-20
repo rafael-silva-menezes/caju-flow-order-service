@@ -19,15 +19,15 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 	tests := []struct {
 		name        string
 		orderID     string
-		input       dtos.CreateOrderInput
+		input       dtos.OrderInput
 		setupMocks  func(mockRepo *usecasemock.MockOrderRepository)
-		expected    dtos.GetOrderOutput
+		expected    dtos.OrderOutput
 		expectedErr error
 	}{
 		{
 			name:    "should update pending order",
 			orderID: "123",
-			input: dtos.CreateOrderInput{
+			input: dtos.OrderInput{
 				CustomerName: "Jane",
 				Items: []dtos.ItemInput{
 					{ID: "item1", Name: "Item 1", Quantity: 2, Price: 10},
@@ -43,7 +43,7 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 				mockRepo.On("FindByID", mock.Anything, "123").Return(order, nil)
 				mockRepo.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
-			expected: dtos.GetOrderOutput{
+			expected: dtos.OrderOutput{
 				OrderID:      "123",
 				CustomerName: "Jane",
 				Total:        20,
@@ -57,7 +57,7 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 		{
 			name:    "should return error if order not found",
 			orderID: "999",
-			input: dtos.CreateOrderInput{
+			input: dtos.OrderInput{
 				CustomerName: "Jane",
 				Items: []dtos.ItemInput{
 					{ID: "item1", Name: "Item 1", Quantity: 1, Price: 10},
@@ -66,13 +66,13 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 			setupMocks: func(mockRepo *usecasemock.MockOrderRepository) {
 				mockRepo.On("FindByID", mock.Anything, "999").Return(nil, repository.ErrNotFound)
 			},
-			expected:    dtos.GetOrderOutput{},
+			expected:    dtos.OrderOutput{},
 			expectedErr: errors.New("order not found"),
 		},
 		{
 			name:    "should return error if order is not pending",
 			orderID: "123",
-			input: dtos.CreateOrderInput{
+			input: dtos.OrderInput{
 				CustomerName: "Jane",
 				Items: []dtos.ItemInput{
 					{ID: "item1", Name: "Item 1", Quantity: 1, Price: 10},
@@ -87,7 +87,7 @@ func TestUpdateOrderUseCase_Execute(t *testing.T) {
 				}
 				mockRepo.On("FindByID", mock.Anything, "123").Return(order, nil)
 			},
-			expected:    dtos.GetOrderOutput{},
+			expected:    dtos.OrderOutput{},
 			expectedErr: errors.New("order cannot be updated as it is not pending"),
 		},
 	}

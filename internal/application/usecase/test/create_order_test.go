@@ -21,7 +21,7 @@ func TestCreateOrderUseCase(t *testing.T) {
 		mockPub := new(usecasemock.MockOrderPublisher)
 		useCase := usecase.NewCreateOrderUseCase(mockRepo, mockPub)
 
-		input := dtos.CreateOrderInput{
+		input := dtos.OrderInput{
 			CustomerName: "John Doe",
 			Items: []dtos.ItemInput{
 				{
@@ -43,7 +43,7 @@ func TestCreateOrderUseCase(t *testing.T) {
 			Items:        []entity.Item{{ID: "1", Name: "Item 1", Quantity: 2, Price: 10.0}},
 		}
 
-		expectedOutput := dtos.FromEntityToCreateOrderOutput(mockOrder)
+		expectedOutput := dtos.FromEntityToOrderOutput(mockOrder)
 
 		output, err := useCase.Execute(context.Background(), input)
 
@@ -64,7 +64,7 @@ func TestCreateOrderUseCase(t *testing.T) {
 		mockPub := new(usecasemock.MockOrderPublisher)
 		useCase := usecase.NewCreateOrderUseCase(mockRepo, mockPub)
 
-		input := dtos.CreateOrderInput{
+		input := dtos.OrderInput{
 			CustomerName: "John Doe",
 			Items:        []dtos.ItemInput{},
 		}
@@ -81,7 +81,7 @@ func TestCreateOrderUseCase(t *testing.T) {
 		mockPub := new(usecasemock.MockOrderPublisher)
 		useCase := usecase.NewCreateOrderUseCase(mockRepo, mockPub)
 
-		input := dtos.CreateOrderInput{
+		input := dtos.OrderInput{
 			CustomerName: "John Doe",
 			Items: []dtos.ItemInput{
 				{
@@ -105,7 +105,7 @@ func TestCreateOrderUseCase(t *testing.T) {
 		mockPub := new(usecasemock.MockOrderPublisher)
 		useCase := usecase.NewCreateOrderUseCase(mockRepo, mockPub)
 
-		input := dtos.CreateOrderInput{
+		input := dtos.OrderInput{
 			CustomerName: "John Doe",
 			Items: []dtos.ItemInput{
 				{

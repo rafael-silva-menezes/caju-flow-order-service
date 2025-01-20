@@ -20,7 +20,7 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 		name        string
 		orderID     string
 		setupMocks  func(mockRepo *usecasemock.MockOrderRepository)
-		expected    dtos.GetOrderOutput
+		expected    dtos.OrderOutput
 		expectedErr error
 	}{
 		{
@@ -35,7 +35,7 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 				mockRepo.On("FindByID", mock.Anything, "123").Return(order, nil)
 				mockRepo.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
-			expected: dtos.GetOrderOutput{
+			expected: dtos.OrderOutput{
 				OrderID:      "123",
 				CustomerName: "John",
 				Total:        0,
@@ -49,7 +49,7 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 			setupMocks: func(mockRepo *usecasemock.MockOrderRepository) {
 				mockRepo.On("FindByID", mock.Anything, "999").Return(nil, repository.ErrNotFound)
 			},
-			expected:    dtos.GetOrderOutput{},
+			expected:    dtos.OrderOutput{},
 			expectedErr: errors.New("order not found"),
 		},
 		{
@@ -63,7 +63,7 @@ func TestCancelOrderUseCase_Execute(t *testing.T) {
 				}
 				mockRepo.On("FindByID", mock.Anything, "123").Return(order, nil)
 			},
-			expected:    dtos.GetOrderOutput{},
+			expected:    dtos.OrderOutput{},
 			expectedErr: errors.New("only pending orders can be canceled"),
 		},
 	}
