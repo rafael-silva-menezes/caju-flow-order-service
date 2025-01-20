@@ -8,7 +8,9 @@ import (
 	"order-service/internal/application/dtos"
 	"order-service/internal/application/usecase"
 	usecasemock "order-service/internal/application/usecase/mock"
+	"order-service/internal/domain/entity"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,14 +36,24 @@ func TestCreateOrderUseCase(t *testing.T) {
 		mockRepo.On("Save", mock.Anything, mock.AnythingOfType("*entity.Order")).Return(nil)
 		mockPub.On("PublishCreatedOrder", mock.Anything, mock.AnythingOfType("*entity.Order")).Return(nil)
 
+		mockOrder := &entity.Order{
+			OrderID:      uuid.New().String(),
+			CustomerName: "John Doe",
+			Status:       entity.Pending,
+			Items:        []entity.Item{{ID: "1", Name: "Item 1", Quantity: 2, Price: 10.0}},
+		}
+
+		expectedOutput := dtos.FromEntityToCreateOrderOutput(mockOrder)
+
 		output, err := useCase.Execute(context.Background(), input)
 
 		assert.NoError(t, err)
-		assert.NotEmpty(t, output.OrderID)
-		assert.Equal(t, input.CustomerName, output.CustomerName)
-		assert.Equal(t, "pending", output.Status)
-		assert.Equal(t, 20.0, output.Total)
-		assert.Len(t, output.Items, 1)
+		_, err = uuid.Parse(output.OrderID)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedOutput.CustomerName, output.CustomerName)
+		assert.Equal(t, expectedOutput.Status, output.Status)
+		assert.Equal(t, expectedOutput.Total, output.Total)
+		assert.Len(t, output.Items, len(expectedOutput.Items))
 
 		mockRepo.AssertExpectations(t)
 		mockPub.AssertExpectations(t)

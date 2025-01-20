@@ -87,3 +87,20 @@ func (o *Order) UpdateOrderDetails(newCustomerName string, newItems []Item) erro
 
 	return nil
 }
+
+// Método SetStatus para atualizar o status do pedido
+func (o *Order) SetStatus(status OrderStatus) error {
+	// Verifica se o status atual permite a alteração
+	if o.Status == status {
+		return nil // Caso o status seja o mesmo, não faz sentido alterá-lo
+	}
+
+	// Caso o pedido já tenha sido processado ou concluído, ele não pode ser alterado para outro status
+	if o.Status == Completed || o.Status == Canceled {
+		return errors.New("cannot change status of completed or canceled order")
+	}
+
+	o.Status = status
+	o.UpdatedAt = time.Now()
+	return nil
+}

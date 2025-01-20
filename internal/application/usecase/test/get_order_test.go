@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"order-service/internal/application/dtos"
 	"order-service/internal/application/usecase"
 	usecasemock "order-service/internal/application/usecase/mock"
 	"order-service/internal/domain/entity"
@@ -30,13 +31,15 @@ func TestGetOrderUseCase(t *testing.T) {
 		order, _ := entity.NewOrder("order123", "John Doe", items)
 		mockRepo.On("FindByID", mock.Anything, "order123").Return(order, nil)
 
+		expectedOutput := dtos.FromEntityToGetOrderOutput(order)
+
 		output, err := useCase.Execute(context.Background(), "order123")
 
 		assert.NoError(t, err)
-		assert.Equal(t, order.OrderID, output.OrderID)
-		assert.Equal(t, order.CustomerName, output.CustomerName)
-		assert.Equal(t, order.Total(), output.Total)
-		assert.Equal(t, order.Status.String(), output.Status)
+		assert.Equal(t, expectedOutput.OrderID, output.OrderID)
+		assert.Equal(t, expectedOutput.CustomerName, output.CustomerName)
+		assert.Equal(t, expectedOutput.Total, output.Total)
+		assert.Equal(t, expectedOutput.Status, output.Status)
 	})
 
 	t.Run("not found", func(t *testing.T) {
