@@ -8,7 +8,7 @@ type OrderInput struct {
 }
 
 type OrderOutput struct {
-	OrderID      string       `json:"order_id"`
+	ID           string       `json:"order_id"`
 	CustomerName string       `json:"customer_name"`
 	Items        []ItemOutput `json:"items"`
 	Total        float64      `json:"total"`
@@ -32,7 +32,7 @@ func FromEntityToOrderOutput(order *entity.Order) OrderOutput {
 	}
 
 	return OrderOutput{
-		OrderID:      order.OrderID,
+		ID:           order.ID,
 		CustomerName: order.CustomerName,
 		Total:        order.Total(),
 		Status:       order.Status.String(),
