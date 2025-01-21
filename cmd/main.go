@@ -12,7 +12,7 @@ func main() {
 		log.Fatalf("error loading configuration: %v", err)
 	}
 
-	db, queueConn, err := setupInfra(cfg)
+	db, queueConn, err := config.SetupInfra(cfg)
 	if err != nil {
 		log.Fatalf("error setting up infrastructure: %v", err)
 	}

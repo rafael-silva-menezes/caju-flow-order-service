@@ -1,17 +1,16 @@
-package main
+package config
 
 import (
 	"database/sql"
 	"log"
 
-	"order-service/internal/config"
 	"order-service/internal/infrastructure/migrations"
 
 	"github.com/streadway/amqp"
 )
 
-func setupInfra(cfg *config.Conf) (*sql.DB, *amqp.Connection, error) {
-	db, err := config.InitDatabase(cfg)
+func SetupInfra(cfg *Conf) (*sql.DB, *amqp.Connection, error) {
+	db, err := InitDatabase(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -20,7 +19,7 @@ func setupInfra(cfg *config.Conf) (*sql.DB, *amqp.Connection, error) {
 		return nil, nil, err
 	}
 
-	queueConn, err := config.InitQueue(cfg)
+	queueConn, err := InitQueue(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
