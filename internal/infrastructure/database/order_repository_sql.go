@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	"order-service/internal/domain/entity"
 	"order-service/internal/domain/repository"
@@ -23,6 +24,9 @@ func (r *OrderRepositorySql) Save(ctx context.Context, order *entity.Order) erro
 		return err
 	}
 	defer tx.Rollback()
+	if err := tx.Rollback(); err != nil {
+		log.Printf("Error rolling back transaction: %v", err)
+	}
 
 	orderQuery := `
 		INSERT INTO orders (id, customer_name, status, created_at, updated_at)
