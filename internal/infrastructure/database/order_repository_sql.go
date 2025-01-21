@@ -23,10 +23,11 @@ func (r *OrderRepositorySql) Save(ctx context.Context, order *entity.Order) erro
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
-	if err := tx.Rollback(); err != nil {
-		log.Printf("Error rolling back transaction: %v", err)
-	}
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			log.Printf("Error rolling back transaction: %v", err)
+		}
+	}()
 
 	orderQuery := `
 		INSERT INTO orders (id, customer_name, status, created_at, updated_at)
