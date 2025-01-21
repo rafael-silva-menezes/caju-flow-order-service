@@ -49,13 +49,12 @@ jobs:
         with:
           version: v1.60
 
-      # Novas etapas para Docker e testes
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Start test database
         run: |
-          docker-compose up -d postgres_test
+          docker-compose -f docker-compose-test.yml up -d postgres_test
           # Aguarda o postgres ficar pronto
           timeout 30s bash -c 'until docker-compose exec -T postgres_test pg_isready; do sleep 1; done'
 
@@ -73,7 +72,7 @@ jobs:
 
       - name: Stop test database
         if: always()
-        run: docker-compose down
+        run: docker-compose -f docker-compose-test.yml down
 
       - name: Filter coverage files to exclude test files
         run: |
