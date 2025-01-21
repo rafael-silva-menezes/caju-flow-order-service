@@ -54,9 +54,9 @@ jobs:
 
       - name: Start test database
         run: |
-          docker-compose -f docker-compose-test.yml up -d postgres_test
+          docker compose -f docker-compose-test.yml up -d postgres_test
           # Aguarda o postgres ficar pronto
-          timeout 30s bash -c 'until docker-compose exec -T postgres_test pg_isready; do sleep 1; done'
+          timeout 30s bash -c 'until docker compose exec -T postgres_test pg_isready; do sleep 1; done'
 
       - name: Run Tests with Coverage
         run: |
@@ -72,7 +72,7 @@ jobs:
 
       - name: Stop test database
         if: always()
-        run: docker-compose -f docker-compose-test.yml down
+        run: docker compose -f docker-compose-test.yml down
 
       - name: Filter coverage files to exclude test files
         run: |
