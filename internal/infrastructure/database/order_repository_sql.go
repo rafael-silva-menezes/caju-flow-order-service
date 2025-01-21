@@ -24,7 +24,6 @@ func (r *OrderRepositorySql) Save(ctx context.Context, order *entity.Order) erro
 	}
 	defer tx.Rollback()
 
-	// Inserir o pedido
 	orderQuery := `
 		INSERT INTO orders (id, customer_name, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5)
@@ -36,14 +35,12 @@ func (r *OrderRepositorySql) Save(ctx context.Context, order *entity.Order) erro
 		return err
 	}
 
-	// Remover itens antigos
 	itemDeleteQuery := `DELETE FROM order_items WHERE order_id = $1`
 	_, err = tx.ExecContext(ctx, itemDeleteQuery, order.ID)
 	if err != nil {
 		return err
 	}
 
-	// Inserir itens novos
 	itemInsertQuery := `
 		INSERT INTO order_items (id, order_id, name, quantity, price)
 		VALUES ($1, $2, $3, $4, $5)
@@ -77,7 +74,6 @@ func (r *OrderRepositorySql) FindByID(ctx context.Context, id string) (*entity.O
 	}
 	order.Status = parseOrderStatus(status)
 
-	// Buscar itens do pedido
 	itemQuery := `
 		SELECT id, name, quantity, price
 		FROM order_items
@@ -101,7 +97,6 @@ func (r *OrderRepositorySql) FindByID(ctx context.Context, id string) (*entity.O
 }
 
 func (r *OrderRepositorySql) List(ctx context.Context) ([]entity.Order, error) {
-	// Buscar todos os pedidos
 	orderQuery := `
 		SELECT id, customer_name, status, created_at, updated_at
 		FROM orders
@@ -126,7 +121,6 @@ func (r *OrderRepositorySql) List(ctx context.Context) ([]entity.Order, error) {
 		orders = append(orders, order)
 	}
 
-	// Buscar itens para todos os pedidos
 	itemQuery := `
 		SELECT id, order_id, name, quantity, price
 		FROM order_items
