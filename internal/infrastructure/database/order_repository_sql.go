@@ -56,7 +56,6 @@ func (r *OrderRepositorySql) Save(ctx context.Context, order *entity.Order) erro
 }
 
 func (r *OrderRepositorySql) FindByID(ctx context.Context, id string) (*entity.Order, error) {
-	// Buscar o pedido
 	orderQuery := `
 		SELECT id, customer_name, status, created_at, updated_at
 		FROM orders

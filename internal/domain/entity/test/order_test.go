@@ -138,5 +138,5 @@ func TestOrder_UpdateOrderDetails_EmptyItems(t *testing.T) {
 
 	err = order.UpdateOrderDetails("Maria Silva", nil)
 	require.Error(t, err)
-	assert.Equal(t, "order must contain at least one item", err.Error()) // Atualizado
+	assert.Equal(t, "order must contain at least one item", err.Error())
 }
