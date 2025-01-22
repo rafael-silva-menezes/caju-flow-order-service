@@ -54,6 +54,14 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          timeout 10s bash -c 'until docker compose -f docker-compose-test.yml exec -T postgres_test pg_isready; do sleep 1; done'
+
+      - name: Wait for RabbitMQ to be ready
+        run: |
+          timeout 20s bash -c 'until docker compose -f docker-compose-test.yml exec -T rabbitmq_test rabbitmq-diagnostics -q check_running; do sleep 1; done'
+
       - name: Run Tests with Coverage
         run: |
           go test ./... -coverprofile=coverage.out -json
