@@ -49,34 +49,28 @@ jobs:
         with:
           version: v1.60
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Start test database
-        run: |
-          docker compose -f docker-compose-test.yml up -d postgres_test
-          # Aguarda o postgres ficar pronto
-          timeout 30s bash -c 'until docker compose exec -T postgres_test pg_isready; do sleep 1; done'
+      - name: Start test infrastructure
+        run: docker compose -f docker-compose-test.yml up -d
+        env:
+          DOCKER_BUILDKIT: 1
 
       - name: Run Tests with Coverage
         run: |
-          # Aguarda mais alguns segundos para garantir que o banco está pronto
-          sleep 5
+          sleep 10 # Garantir que os serviços estão prontos
           go test ./... -coverprofile=coverage.out -json
         env:
           POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5433
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: orders_test
+          POSTGRES_PORT: 5435
+          POSTGRES_USER: order_test_user
+          POSTGRES_PASSWORD: order_test_pass
+          POSTGRES_DB: order_test_db
 
-      - name: Stop test database
+      - name: Stop test infrastructure
         if: always()
         run: docker compose -f docker-compose-test.yml down
 
       - name: Filter coverage files to exclude test files
-        run: |
-          grep -v '_test.go' coverage.out > filtered-coverage.out
+        run: grep -v '_test.go' coverage.out > filtered-coverage.out
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v5
