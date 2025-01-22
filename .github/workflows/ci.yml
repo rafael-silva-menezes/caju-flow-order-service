@@ -60,7 +60,7 @@ jobs:
 
       - name: Wait for RabbitMQ to be ready
         run: |
-          timeout 5s bash -c 'until curl -s --head --request GET http://localhost:15675/api/overview | grep "HTTP/1.1 200 OK"; do sleep 1; done'
+          timeout 5s bash -c 'until docker compose -f docker-compose-test.yml exec -T rabbitmq_test rabbitmqctl status; do sleep 1; done'
 
       - name: Run Tests with Coverage
         run: |
