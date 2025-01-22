@@ -54,9 +54,12 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          timeout 30s bash -c 'until docker compose -f docker-compose-test.yml exec -T postgres_test pg_isready; do sleep 1; done'
+
       - name: Run Tests with Coverage
         run: |
-          sleep 10 # Garantir que os serviços estão prontos
           go test ./... -coverprofile=coverage.out -json
         env:
           POSTGRES_HOST: localhost
