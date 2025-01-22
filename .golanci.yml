@@ -1,0 +1,5 @@
+run:
+  enable-all: false
+  linters:
+    enable:
+      - errcheck
