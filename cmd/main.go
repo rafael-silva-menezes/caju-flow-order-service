@@ -25,7 +25,7 @@ func main() {
 	defer queueConn.Close()
 
 	orderRepository := database.NewOrderRepositorySql(db)
-	rabbitPublisher, err := publisher.NewRabbitMQPublisher(queueConn, "orders_exchange", "order_created")
+	rabbitPublisher, err := publisher.NewRabbitMQPublisher(queueConn, "orders_exchange", "order_created", "order_created_queue")
 	if err != nil {
 		log.Fatalf("error creating RabbitMQ publisher: %v", err)
 	}
