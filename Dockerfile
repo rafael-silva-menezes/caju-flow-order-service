@@ -1,18 +1,24 @@
-# Use an official Golang image as a base
-FROM golang:alpine
+FROM golang:1.22.6-alpine AS builder
 
-# Set working directory inside the container
+RUN apk add --no-cache git
+
 WORKDIR /app
 
-# Copy go.mod and go.sum to cache dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code into the container
 COPY . .
 
-# Build the application
-RUN go build -o app .
+RUN go build -o app ./cmd/main.go
 
-# Command to run the application
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
+
+WORKDIR /root/
+
+COPY --from=builder /app/app .
+
+EXPOSE 8080
+
 CMD ["./app"]
