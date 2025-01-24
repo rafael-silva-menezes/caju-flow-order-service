@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"order-service/internal/application/usecase"
 	"order-service/internal/config"
@@ -12,14 +14,28 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig(".")
+	env := strings.ToLower(os.Getenv("ENVIRONMENT"))
+	if env == "" {
+		env = "prod"
+	}
+
+	log.Printf("Running in %s environment\n", env)
+
+	var logger *log.Logger
+	if env == "dev" {
+		logger = log.New(os.Stdout, "DEV ", log.LstdFlags|log.Lshortfile)
+	} else {
+		logger = log.New(os.Stdout, "PROD ", log.LstdFlags)
+	}
+
+	cfg, err := config.LoadConfig(env)
 	if err != nil {
-		log.Fatalf("error loading configuration: %v", err)
+		logger.Fatalf("Error loading configuration: %v", err)
 	}
 
 	db, queueConn, err := config.SetupInfra(cfg)
 	if err != nil {
-		log.Fatalf("error setting up infrastructure: %v", err)
+		logger.Fatalf("Error setting up infrastructure: %v", err)
 	}
 	defer db.Close()
 	defer queueConn.Close()
@@ -27,7 +43,7 @@ func main() {
 	orderRepository := database.NewOrderRepositorySql(db)
 	rabbitPublisher, err := publisher.NewRabbitMQPublisher(queueConn, "orders_exchange", "order_created", "order_created_queue")
 	if err != nil {
-		log.Fatalf("error creating RabbitMQ publisher: %v", err)
+		logger.Fatalf("Error creating RabbitMQ publisher: %v", err)
 	}
 
 	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, rabbitPublisher)
@@ -46,6 +62,6 @@ func main() {
 
 	r := api.NewRouter(handlers)
 
-	log.Println("Starting server on :8080...")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	logger.Println("Starting server on :8080...")
+	logger.Fatal(http.ListenAndServe(":8080", r))
 }

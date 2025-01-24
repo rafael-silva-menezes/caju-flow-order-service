@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
@@ -22,20 +23,35 @@ type Conf struct {
 	WebServerPort        string `mapstructure:"WEB_SERVER_PORT"`
 }
 
-func LoadConfig(path string) (*Conf, error) {
+func LoadConfig(env string) (*Conf, error) {
 	var cfg *Conf
-	viper.SetConfigName("app_config")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(path)
-	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil, fmt.Errorf("error reading config: %v", err)
+
+	if env == "dev" {
+		if !fileExists(".env") {
+			return nil, fmt.Errorf(".env file not found in dev environment")
+		}
+
+		viper.SetConfigFile(".env")
+		err := viper.ReadInConfig()
+		if err != nil {
+			return nil, fmt.Errorf("error reading .env file: %v", err)
+		}
+		fmt.Println("Loaded .env for dev environment")
+	} else {
+		fmt.Println("Using system environment variables for prod environment")
 	}
-	err = viper.Unmarshal(&cfg)
+
+	viper.AutomaticEnv()
+
+	err := viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %v", err)
 	}
+
 	return cfg, nil
+}
+
+func fileExists(filepath string) bool {
+	_, err := os.Stat(filepath)
+	return err == nil
 }
