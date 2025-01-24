@@ -22,13 +22,18 @@ func respondWithError(w http.ResponseWriter, status int, message string) {
 func (api *API) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var input dtos.OrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid input")
+		respondWithError(w, http.StatusBadRequest, "Invalid input: "+err.Error())
+		return
+	}
+
+	if input.CustomerName == "" || len(input.Items) == 0 {
+		respondWithError(w, http.StatusBadRequest, "Customer name and items are required")
 		return
 	}
 
 	orderOutput, err := api.createOrderUseCase.Execute(r.Context(), input)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to create order")
+		respondWithError(w, http.StatusInternalServerError, "Failed to create order: "+err.Error())
 		return
 	}
 
@@ -37,9 +42,14 @@ func (api *API) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) GetOrder(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if id == "" {
+		respondWithError(w, http.StatusBadRequest, "Order ID is required")
+		return
+	}
+
 	orderOutput, err := api.getOrderUseCase.Execute(r.Context(), id)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Order not found")
+		respondWithError(w, http.StatusNotFound, "Order not found: "+err.Error())
 		return
 	}
 
@@ -59,8 +69,14 @@ func (api *API) ListOrders(w http.ResponseWriter, r *http.Request) {
 func (api *API) UpdateOrder(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var input dtos.OrderInput
+
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid input")
+		respondWithError(w, http.StatusBadRequest, "Invalid input: "+err.Error())
+		return
+	}
+
+	if input.CustomerName == "" || len(input.Items) == 0 {
+		respondWithError(w, http.StatusBadRequest, "Customer name and items are required")
 		return
 	}
 

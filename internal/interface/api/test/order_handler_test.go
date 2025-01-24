@@ -4,234 +4,264 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"order-service/internal/application/dtos"
-	"order-service/internal/application/usecase"
 	"order-service/internal/interface/api"
 
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-type MockCreateOrderUseCase struct {
-	mock.Mock
+type mockCreateOrderUseCase struct {
+	output dtos.OrderOutput
+	err    error
 }
 
-func (m *MockCreateOrderUseCase) Execute(ctx context.Context, input dtos.OrderInput) (dtos.OrderOutput, error) {
-	args := m.Called(ctx, input)
-	return args.Get(0).(dtos.OrderOutput), args.Error(1)
+func (m *mockCreateOrderUseCase) Execute(ctx context.Context, input dtos.OrderInput) (dtos.OrderOutput, error) {
+	return m.output, m.err
 }
 
-type MockGetOrderUseCase struct {
-	mock.Mock
-}
-
-func (m *MockGetOrderUseCase) Execute(ctx context.Context, id string) (dtos.OrderOutput, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(dtos.OrderOutput), args.Error(1)
-}
-
-type MockListOrderUseCase struct {
-	mock.Mock
-}
-
-func (m *MockListOrderUseCase) Execute(ctx context.Context) (dtos.ListOrderOutput, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(dtos.ListOrderOutput), args.Error(1)
-}
-
-type MockUpdateOrderUseCase struct {
-	mock.Mock
-}
-
-func (m *MockUpdateOrderUseCase) Execute(ctx context.Context, id string, input dtos.OrderInput) (dtos.OrderOutput, error) {
-	args := m.Called(ctx, id, input)
-	return args.Get(0).(dtos.OrderOutput), args.Error(1)
-}
-
-type MockCancelOrderUseCase struct {
-	mock.Mock
-}
-
-func (m *MockCancelOrderUseCase) Execute(ctx context.Context, id string) (dtos.OrderOutput, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(dtos.OrderOutput), args.Error(1)
-}
-
-func setupRouter(
-	createOrderUseCase usecase.CreateOrderUseCase,
-	updateOrderUseCase usecase.UpdateOrderUseCase,
-	cancelOrderUseCase usecase.CancelOrderUseCase,
-	getOrderUseCase usecase.GetOrderUseCase,
-	listOrderUseCase usecase.ListOrderUseCase,
-) *api.API {
-	return api.NewAPI(
-		createOrderUseCase,
-		updateOrderUseCase,
-		cancelOrderUseCase,
-		getOrderUseCase,
-		listOrderUseCase,
-	)
-}
-
-func TestCreateOrder(t *testing.T) {
-	mockCreateOrderUseCase := new(MockCreateOrderUseCase)
-	expectedOrder := dtos.OrderOutput{
-		ID: "1",
+func TestCreateOrder_Success(t *testing.T) {
+	mockUseCase := &mockCreateOrderUseCase{
+		output: dtos.OrderOutput{ID: "1", CustomerName: "John Doe", Status: "pending"},
 	}
+	api := api.NewAPI(mockUseCase, nil, nil, nil, nil)
 
-	mockCreateOrderUseCase.On("Execute", mock.Anything, mock.Anything).Return(expectedOrder, nil)
+	body := `{"customer_name": "John Doe", "items": [{"name": "item1", "quantity": 1, "price": 100}]}`
+	req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewReader([]byte(body)))
+	rec := httptest.NewRecorder()
 
-	apiInstance := setupRouter(mockCreateOrderUseCase, nil, nil, nil, nil)
+	api.CreateOrder(rec, req)
 
-	orderInput := dtos.OrderInput{
-		CustomerName: "John Doe",
-		Items: []dtos.ItemInput{
-			{
-				ID:       "1",
-				Name:     "Item 1",
-				Quantity: 2,
-				Price:    10.0,
-			},
-		},
-	}
-
-	body, _ := json.Marshal(orderInput)
-
-	req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	recorder := httptest.NewRecorder()
-
-	apiInstance.CreateOrder(recorder, req)
-
-	assert.Equal(t, http.StatusCreated, recorder.Code)
-
-	var result dtos.OrderOutput
-	json.NewDecoder(recorder.Body).Decode(&result)
-
-	assert.Equal(t, expectedOrder.ID, result.ID)
-	mockCreateOrderUseCase.AssertExpectations(t)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	var response dtos.OrderOutput
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "1", response.ID)
 }
 
-func TestGetOrder(t *testing.T) {
-	mockGetOrderUseCase := new(MockGetOrderUseCase)
-	expectedOrder := dtos.OrderOutput{
-		ID: "1",
+func TestCreateOrder_InvalidInput(t *testing.T) {
+	api := api.NewAPI(nil, nil, nil, nil, nil)
+
+	body := `{"customer_name": "", "items": []}`
+	req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewReader([]byte(body)))
+	rec := httptest.NewRecorder()
+
+	api.CreateOrder(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Customer name and items are required")
+}
+
+func TestCreateOrder_UseCaseError(t *testing.T) {
+	mockUseCase := &mockCreateOrderUseCase{
+		err: errors.New("use case error"),
 	}
+	api := api.NewAPI(mockUseCase, nil, nil, nil, nil)
 
-	mockGetOrderUseCase.On("Execute", mock.Anything, "1").Return(expectedOrder, nil)
+	body := `{"customer_name": "John Doe", "items": [{"name": "item1", "quantity": 1, "price": 100}]}`
+	req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewReader([]byte(body)))
+	rec := httptest.NewRecorder()
 
-	apiInstance := setupRouter(nil, nil, mockGetOrderUseCase, nil, nil)
+	api.CreateOrder(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Failed to create order")
+}
+
+type mockGetOrderUseCase struct {
+	output dtos.OrderOutput
+	err    error
+}
+
+func (m *mockGetOrderUseCase) Execute(ctx context.Context, id string) (dtos.OrderOutput, error) {
+	return m.output, m.err
+}
+
+func TestGetOrder_Success(t *testing.T) {
+	mockUseCase := &mockGetOrderUseCase{
+		output: dtos.OrderOutput{ID: "1", CustomerName: "John Doe", Status: "pending"},
+	}
+	api := api.NewAPI(nil, nil, nil, mockUseCase, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/orders/1", nil)
-	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
 
-	recorder := httptest.NewRecorder()
+	r := chi.NewRouter()
+	r.Get("/orders/{id}", api.GetOrder)
+	r.ServeHTTP(rec, req)
 
-	apiInstance.GetOrder(recorder, req)
-
-	assert.Equal(t, http.StatusOK, recorder.Code)
-
-	var result dtos.OrderOutput
-	json.NewDecoder(recorder.Body).Decode(&result)
-
-	assert.Equal(t, expectedOrder.ID, result.ID)
-	mockGetOrderUseCase.AssertExpectations(t)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var response dtos.OrderOutput
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "1", response.ID)
 }
 
-func TestListOrders(t *testing.T) {
-	mockListOrderUseCase := new(MockListOrderUseCase)
-	expectedList := dtos.ListOrderOutput{
-		Orders: []dtos.OrderOutput{
-			{ID: "1"},
-			{ID: "2"},
-		},
+func TestGetOrder_NotFound(t *testing.T) {
+	mockUseCase := &mockGetOrderUseCase{
+		err: errors.New("order not found"),
 	}
+	api := api.NewAPI(nil, nil, nil, mockUseCase, nil)
 
-	mockListOrderUseCase.On("Execute", mock.Anything).Return(expectedList, nil)
+	req := httptest.NewRequest(http.MethodGet, "/orders/1", nil)
+	rec := httptest.NewRecorder()
 
-	apiInstance := setupRouter(nil, nil, nil, nil, mockListOrderUseCase)
+	r := chi.NewRouter()
+	r.Get("/orders/{id}", api.GetOrder)
+	r.ServeHTTP(rec, req)
 
-	req := httptest.NewRequest(http.MethodGet, "/orders", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	recorder := httptest.NewRecorder()
-
-	apiInstance.ListOrders(recorder, req)
-
-	var result dtos.ListOrderOutput
-	json.NewDecoder(recorder.Body).Decode(&result)
-
-	assert.Equal(t, len(expectedList.Orders), len(result.Orders))
-	mockListOrderUseCase.AssertExpectations(t)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Order not found")
 }
 
-func TestUpdateOrder(t *testing.T) {
-	mockUpdateOrderUseCase := new(MockUpdateOrderUseCase)
-	expectedOrder := dtos.OrderOutput{
-		ID: "1",
-	}
+type mockListOrderUseCase struct {
+	output dtos.ListOrderOutput
+	err    error
+}
 
-	mockUpdateOrderUseCase.On("Execute", mock.Anything, "1", mock.Anything).Return(expectedOrder, nil)
+func (m *mockListOrderUseCase) Execute(ctx context.Context) (dtos.ListOrderOutput, error) {
+	return m.output, m.err
+}
 
-	apiInstance := setupRouter(nil, mockUpdateOrderUseCase, nil, nil, nil)
-
-	orderInput := dtos.OrderInput{
-		CustomerName: "John Doe",
-		Items: []dtos.ItemInput{
-			{
-				ID:       "1",
-				Name:     "Item 1",
-				Quantity: 2,
-				Price:    10.0,
+func TestListOrders_Success(t *testing.T) {
+	mockUseCase := &mockListOrderUseCase{
+		output: dtos.ListOrderOutput{
+			Orders: []dtos.OrderOutput{
+				{ID: "1", CustomerName: "John Doe", Status: "pending"},
+				{ID: "2", CustomerName: "Jane Doe", Status: "completed"},
 			},
 		},
 	}
+	api := api.NewAPI(nil, nil, nil, nil, mockUseCase)
 
-	body, _ := json.Marshal(orderInput)
+	req := httptest.NewRequest(http.MethodGet, "/orders", nil)
+	rec := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodPut, "/orders/1", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
+	r := chi.NewRouter()
+	r.Get("/orders", api.ListOrders)
+	r.ServeHTTP(rec, req)
 
-	recorder := httptest.NewRecorder()
-
-	apiInstance.UpdateOrder(recorder, req)
-
-	assert.Equal(t, http.StatusOK, recorder.Code)
-
-	var result dtos.OrderOutput
-	json.NewDecoder(recorder.Body).Decode(&result)
-
-	assert.Equal(t, expectedOrder.ID, result.ID)
-	mockUpdateOrderUseCase.AssertExpectations(t)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var response dtos.ListOrderOutput
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Len(t, response.Orders, 2)
+	assert.Equal(t, "1", response.Orders[0].ID)
 }
 
-func TestCancelOrder(t *testing.T) {
-	mockCancelOrderUseCase := new(MockCancelOrderUseCase)
-	expectedOrder := dtos.OrderOutput{
-		ID: "1",
+func TestListOrders_Failure(t *testing.T) {
+	mockUseCase := &mockListOrderUseCase{
+		err: errors.New("failed to fetch orders"),
+	}
+	api := api.NewAPI(nil, nil, nil, nil, mockUseCase)
+
+	req := httptest.NewRequest(http.MethodGet, "/orders", nil)
+	rec := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+	r.Get("/orders", api.ListOrders)
+	r.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Failed to list orders")
+}
+
+type mockUpdateOrderUseCase struct {
+	output dtos.OrderOutput
+	err    error
+}
+
+func (m *mockUpdateOrderUseCase) Execute(ctx context.Context, id string, input dtos.OrderInput) (dtos.OrderOutput, error) {
+	return m.output, m.err
+}
+
+func TestUpdateOrder_Success(t *testing.T) {
+	mockUseCase := &mockUpdateOrderUseCase{
+		output: dtos.OrderOutput{ID: "1", CustomerName: "John Doe", Status: "completed"},
+	}
+	api := api.NewAPI(nil, mockUseCase, nil, nil, nil)
+
+	body := `{"customer_name": "John Doe", "items": [{"name": "item1", "quantity": 2, "price": 200}]}`
+	req := httptest.NewRequest(http.MethodPut, "/orders/1", bytes.NewReader([]byte(body)))
+	rec := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+	r.Put("/orders/{id}", api.UpdateOrder)
+	r.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var response dtos.OrderOutput
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "completed", response.Status)
+}
+
+func TestUpdateOrder_InvalidInput(t *testing.T) {
+	mockUseCase := &mockUpdateOrderUseCase{
+		err: errors.New("use case error"),
 	}
 
-	mockCancelOrderUseCase.On("Execute", mock.Anything, "1").Return(expectedOrder, nil)
+	api := api.NewAPI(nil, mockUseCase, nil, nil, nil)
 
-	apiInstance := setupRouter(nil, nil, mockCancelOrderUseCase, nil, nil)
+	body := `{"customer_name": "", "items": []}`
+	req := httptest.NewRequest(http.MethodPut, "/orders/1", bytes.NewReader([]byte(body)))
+	rec := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+	r.Put("/orders/{id}", api.UpdateOrder)
+	r.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Customer name and items are required")
+}
+
+type mockCancelOrderUseCase struct {
+	output dtos.OrderOutput
+	err    error
+}
+
+func (m *mockCancelOrderUseCase) Execute(ctx context.Context, id string) (dtos.OrderOutput, error) {
+	return m.output, m.err
+}
+
+func TestCancelOrder_Success(t *testing.T) {
+	mockUseCase := &mockCancelOrderUseCase{
+		output: dtos.OrderOutput{ID: "1", CustomerName: "John Doe", Status: "canceled"},
+	}
+	api := api.NewAPI(nil, nil, mockUseCase, nil, nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/orders/1", nil)
-	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
 
-	recorder := httptest.NewRecorder()
+	r := chi.NewRouter()
+	r.Delete("/orders/{id}", api.CancelOrder)
+	r.ServeHTTP(rec, req)
 
-	apiInstance.CancelOrder(recorder, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var response dtos.OrderOutput
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "canceled", response.Status)
+}
 
-	assert.Equal(t, http.StatusOK, recorder.Code)
+func TestCancelOrder_Failure(t *testing.T) {
+	mockUseCase := &mockCancelOrderUseCase{
+		err: errors.New("failed to cancel order"),
+	}
+	api := api.NewAPI(nil, nil, mockUseCase, nil, nil)
 
-	var result dtos.OrderOutput
-	json.NewDecoder(recorder.Body).Decode(&result)
+	req := httptest.NewRequest(http.MethodDelete, "/orders/1", nil)
+	rec := httptest.NewRecorder()
 
-	assert.Equal(t, expectedOrder.ID, result.ID)
-	mockCancelOrderUseCase.AssertExpectations(t)
+	r := chi.NewRouter()
+	r.Delete("/orders/{id}", api.CancelOrder)
+	r.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Failed to cancel order")
 }
