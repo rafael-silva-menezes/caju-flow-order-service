@@ -5,5 +5,6 @@ run:
       - errcheck
 
   linters-settings:
-  errcheck:
-    ignore: encoding/json.Encoder.Encode
+    errcheck:
+      ignore:
+        - "encoding/json.Encoder.Encode"
