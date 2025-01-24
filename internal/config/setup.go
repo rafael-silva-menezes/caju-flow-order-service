@@ -6,10 +6,10 @@ import (
 
 	"order-service/internal/infrastructure/migrations"
 
-	"github.com/streadway/amqp"
+	"github.com/rabbitmq/amqp091-go"
 )
 
-func SetupInfra(cfg *Conf) (*sql.DB, *amqp.Connection, error) {
+func SetupInfra(cfg *Conf) (*sql.DB, *amqp091.Connection, error) {
 	db, err := InitDatabase(cfg)
 	if err != nil {
 		return nil, nil, err

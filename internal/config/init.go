@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/streadway/amqp"
+	"github.com/rabbitmq/amqp091-go"
 )
 
 func InitDatabase(cfg *Conf) (*sql.DB, error) {
@@ -22,12 +22,12 @@ func InitDatabase(cfg *Conf) (*sql.DB, error) {
 	return db, nil
 }
 
-func InitQueue(cfg *Conf) (*amqp.Connection, error) {
+func InitQueue(cfg *Conf) (*amqp091.Connection, error) {
 	url := fmt.Sprintf(
 		"amqp://%s:%s@%s:%s/",
 		cfg.BrokerUser, cfg.BrokerPassword, cfg.BrokerHost, cfg.BrokerPort,
 	)
-	conn, err := amqp.Dial(url)
+	conn, err := amqp091.Dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to broker: %v", err)
 	}
