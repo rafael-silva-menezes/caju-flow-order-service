@@ -17,7 +17,7 @@ func TestPublishCreatedOrder_Integration(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close()
 
-	orderPublisher, err := publisher.NewRabbitMQPublisher(conn, "order-exchange", "order-routing-key")
+	orderPublisher, err := publisher.NewRabbitMQPublisher(conn, "order-exchange", "order-routing-key", "order-queue")
 	assert.NoError(t, err)
 
 	items := []entity.Item{

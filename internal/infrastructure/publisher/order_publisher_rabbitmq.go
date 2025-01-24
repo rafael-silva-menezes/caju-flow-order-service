@@ -18,7 +18,7 @@ type RabbitMQPublisher struct {
 	routingKey string
 }
 
-func NewRabbitMQPublisher(conn *amqp091.Connection, exchange, routingKey string) (*RabbitMQPublisher, error) {
+func NewRabbitMQPublisher(conn *amqp091.Connection, exchange, routingKey, queueName string) (*RabbitMQPublisher, error) {
 	channel, err := conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open a channel: %w", err)
@@ -35,6 +35,29 @@ func NewRabbitMQPublisher(conn *amqp091.Connection, exchange, routingKey string)
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to declare an exchange: %w", err)
+	}
+
+	_, err = channel.QueueDeclare(
+		queueName,
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to declare a queue: %w", err)
+	}
+
+	err = channel.QueueBind(
+		queueName,
+		routingKey,
+		exchange,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to bind queue to exchange: %w", err)
 	}
 
 	return &RabbitMQPublisher{
