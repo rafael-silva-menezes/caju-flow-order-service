@@ -3,3 +3,7 @@ run:
   linters:
     enable:
       - errcheck
+
+  linters-settings:
+  errcheck:
+    ignore: encoding/json.Encoder.Encode
