@@ -12,7 +12,10 @@ import (
 func respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(payload)
+	err := json.NewEncoder(w).Encode(payload)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to encode response: "+err.Error())
+	}
 }
 
 func respondWithError(w http.ResponseWriter, status int, message string) {
